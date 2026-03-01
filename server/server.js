@@ -10,6 +10,7 @@ import actionPlanRoutes from './routes/actionPlan.js';
 import mockInterviewRoutes from './routes/mockInterview.js';
 import readinessRoutes from './routes/readiness.js';
 import leaderboardRoutes from './routes/leaderboard.js';
+import careerCoachRoutes from './routes/careerCoach.js';
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use('/api/action-plan', actionPlanRoutes);
 app.use('/api/mock-interview', mockInterviewRoutes);
 app.use('/api/readiness-card', readinessRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/career-coach', careerCoachRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

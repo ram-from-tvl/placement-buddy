@@ -1,5 +1,6 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -9,7 +10,21 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '../..');
 const pythonScript = path.join(projectRoot, 'llm_service.py');
-const venvPython = path.join(projectRoot, 'venv/bin/python');
+
+const venvDir = path.join(projectRoot, 'venv');
+const unixPython = path.join(venvDir, 'bin', 'python');
+const windowsPython = path.join(venvDir, 'Scripts', 'python.exe');
+
+let venvPython;
+
+if (fs.existsSync(windowsPython)) {
+  venvPython = windowsPython;
+} else if (fs.existsSync(unixPython)) {
+  venvPython = unixPython;
+} else {
+  // Fallback to system Python if virtualenv is not found
+  venvPython = 'python';
+}
 
 export const generateActionPlan = async (profile) => {
   try {
@@ -57,6 +72,35 @@ export const generateMockQuestions = async (role, year) => {
     
   } catch (error) {
     console.error('❌ LLM Service Error:', error.message);
+    throw error;
+  }
+};
+
+export const generateCareerCoachReply = async ({ context, messages }) => {
+  try {
+    console.log('🤖 Generating career coach reply with Groq LLM...');
+
+    const data = JSON.stringify({ context, messages });
+    const command = `${venvPython} ${pythonScript} career_coach '${data}'`;
+
+    const { stdout, stderr } = await execAsync(command, {
+      maxBuffer: 10 * 1024 * 1024 // 10MB buffer
+    });
+
+    if (stderr && !stdout) {
+      throw new Error(`Python script error: ${stderr}`);
+    }
+
+    const result = JSON.parse(stdout);
+
+    if (!result || typeof result.reply !== 'string') {
+      throw new Error('Invalid career coach response format');
+    }
+
+    console.log('✅ Career coach reply generated successfully');
+    return result.reply;
+  } catch (error) {
+    console.error('❌ Career coach LLM Error:', error.message);
     throw error;
   }
 };

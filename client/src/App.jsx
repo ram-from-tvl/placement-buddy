@@ -9,6 +9,7 @@ import MockInterview from './pages/MockInterview';
 import ReadinessCard from './pages/ReadinessCard';
 import Leaderboard from './pages/Leaderboard';
 import PublicCard from './pages/PublicCard';
+import CareerCoach from './pages/CareerCoach';
 import './App.css';
 
 const PrivateRoute = ({ children }) => {
@@ -35,6 +36,7 @@ function AppRoutes() {
         <Route path="/action-plan" element={<PrivateRoute><ActionPlan /></PrivateRoute>} />
         <Route path="/mock-interview" element={<PrivateRoute><MockInterview /></PrivateRoute>} />
         <Route path="/readiness" element={<PrivateRoute><ReadinessCard /></PrivateRoute>} />
+        <Route path="/career-coach" element={<PrivateRoute><CareerCoach /></PrivateRoute>} />
       </Routes>
     </Router>
   );

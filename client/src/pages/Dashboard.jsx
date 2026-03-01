@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
+import CareerCoachChat from '../components/CareerCoachChat';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -62,7 +63,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="actions-grid">
+        <div className="dashboard-main-grid">
+          <div className="actions-grid">
           <Link to="/profile" className="action-card">
             <h3>📝 Complete Profile</h3>
             <p>Set your year, branch, target role, and skills</p>
@@ -87,8 +89,23 @@ export default function Dashboard() {
             <h3>🏆 Leaderboard</h3>
             <p>See top placement-ready students</p>
           </Link>
+          </div>
+
+          <div className="coach-card card">
+            <h2>Career Coach</h2>
+            <p>
+              Ask quick questions about your preparation, what to focus on next,
+              or how to improve your readiness score.
+            </p>
+            <CareerCoachChat compact />
+            <div style={{ marginTop: '16px', textAlign: 'right' }}>
+              <Link to="/career-coach" className="btn-secondary">
+                Open full coach
+              </Link>
+            </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }

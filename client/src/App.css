@@ -408,6 +408,154 @@ body {
   gap: 24px;
 }
 
+.dashboard-main-grid {
+  display: grid;
+  grid-template-columns: 2fr 1.4fr;
+  gap: 32px;
+  margin-top: 40px;
+  align-items: flex-start;
+}
+
+.coach-card {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.career-coach {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.career-coach-compact {
+  max-height: 320px;
+}
+
+.coach-context {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.coach-context-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.coach-tag {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--primary-subtle);
+  color: var(--primary);
+}
+
+.coach-score {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.coach-subtext {
+  font-size: 12px;
+}
+
+.coach-messages {
+  flex: 1;
+  min-height: 120px;
+  max-height: 420px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.coach-message {
+  display: flex;
+}
+
+.coach-message-user {
+  justify-content: flex-end;
+}
+
+.coach-message-assistant,
+.coach-message-system {
+  justify-content: flex-start;
+}
+
+.coach-message-bubble {
+  padding: 8px 12px;
+  border-radius: 16px;
+  max-width: 80%;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.coach-message-user .coach-message-bubble {
+  background: var(--primary);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.coach-message-assistant .coach-message-bubble {
+  background: white;
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+}
+
+.coach-typing {
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.coach-status {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.coach-error {
+  font-size: 13px;
+  color: #dc2626;
+}
+
+.coach-input-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.coach-input-row input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.coach-input-row button {
+  padding: 10px 16px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--primary);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.coach-input-row button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .action-card {
   background: var(--surface);
   padding: 40px 32px;
@@ -1052,6 +1200,10 @@ tr:nth-child(3) .rank {
   .actions-grid {
     grid-template-columns: 1fr;
     gap: 16px;
+  }
+
+  .dashboard-main-grid {
+    grid-template-columns: 1fr;
   }
 
   .readiness-card {
