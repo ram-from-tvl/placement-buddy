@@ -216,7 +216,7 @@ body {
   background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  padding: 16px 48px;
+  padding: 12px 32px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -231,7 +231,7 @@ body {
   background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 800;
   margin: 0;
   letter-spacing: -0.5px;
@@ -239,14 +239,14 @@ body {
 
 .navbar div {
   display: flex;
-  gap: 24px;
+  gap: 16px;
   align-items: center;
 }
 
 .navbar span {
   color: var(--text-muted);
   font-weight: 500;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 /* Buttons */
@@ -313,7 +313,7 @@ body {
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 48px 24px;
+  padding: 32px 20px;
 }
 
 /* Cards */
@@ -321,8 +321,8 @@ body {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  padding: 40px;
-  border-radius: var(--radius-xl);
+  padding: 24px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   margin-bottom: 32px;
   border: 1px solid rgba(255, 255, 255, 0.8);
@@ -356,16 +356,16 @@ body {
 /* Stats Grid */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 24px;
-  margin-bottom: 48px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .stat-card {
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(12px);
-  padding: 32px 24px;
-  border-radius: var(--radius-xl);
+  padding: 20px 16px;
+  border-radius: var(--radius-lg);
   text-align: center;
   box-shadow: var(--shadow-sm);
   border: 1px solid rgba(255, 255, 255, 1);
@@ -374,26 +374,26 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .stat-card:hover {
-  transform: translateY(-6px);
+  transform: translateY(-4px);
   box-shadow: var(--shadow-hover);
   border-color: rgba(255, 255, 255, 1);
 }
 
 .stat-card h3 {
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 11px;
   margin: 0;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   font-weight: 700;
 }
 
 .stat-card .score {
-  font-size: 64px;
+  font-size: 42px;
   font-weight: 800;
   line-height: 1;
   background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
@@ -404,15 +404,15 @@ body {
 /* Actions Grid */
 .actions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
 }
 
 .dashboard-main-grid {
   display: grid;
   grid-template-columns: 2fr 1.4fr;
-  gap: 32px;
-  margin-top: 40px;
+  gap: 20px;
+  margin-top: 20px;
   align-items: flex-start;
 }
 
@@ -421,17 +421,17 @@ body {
 }
 
 .career-coach {
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--surface);
-  padding: 16px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .career-coach-compact {
-  max-height: 320px;
+  max-height: 280px;
 }
 
 .coach-context {
@@ -469,12 +469,12 @@ body {
 
 .coach-messages {
   flex: 1;
-  min-height: 120px;
-  max-height: 420px;
+  min-height: 100px;
+  max-height: 240px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   padding-right: 4px;
 }
 
@@ -492,11 +492,11 @@ body {
 }
 
 .coach-message-bubble {
-  padding: 8px 12px;
-  border-radius: 16px;
-  max-width: 80%;
-  font-size: 14px;
-  line-height: 1.5;
+  padding: 6px 10px;
+  border-radius: 14px;
+  max-width: 85%;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .coach-message-user .coach-message-bubble {
@@ -528,25 +528,25 @@ body {
 
 .coach-input-row {
   display: flex;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 6px;
+  margin-top: 2px;
 }
 
 .coach-input-row input {
   flex: 1;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .coach-input-row button {
-  padding: 10px 16px;
+  padding: 8px 14px;
   border-radius: var(--radius-full);
   border: none;
   background: var(--primary);
   color: white;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
 }
@@ -558,8 +558,8 @@ body {
 
 .action-card {
   background: var(--surface);
-  padding: 40px 32px;
-  border-radius: var(--radius-xl);
+  padding: 24px 20px;
+  border-radius: var(--radius-lg);
   text-decoration: none;
   color: var(--text-main);
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -587,7 +587,7 @@ body {
 }
 
 .action-card:hover {
-  transform: translateY(-8px);
+  transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
   border-color: rgba(14, 165, 233, 0.2);
 }
@@ -597,9 +597,9 @@ body {
 }
 
 .action-card h3 {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   color: var(--text-main);
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.5px;
   transition: color 0.3s;
@@ -611,9 +611,20 @@ body {
 
 .action-card p {
   color: var(--text-muted);
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.5;
   margin: 0;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 12px;
+  background: var(--primary-subtle);
+  color: var(--primary);
+  margin-top: 8px;
 }
 
 /* Form Elements */

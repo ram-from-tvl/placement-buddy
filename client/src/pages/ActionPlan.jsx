@@ -1,45 +1,74 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
 
 export default function ActionPlan() {
   const [plan, setPlan] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchPlan();
-  }, []);
-
-  const fetchPlan = async () => {
+  const fetchPlan = useCallback(async () => {
     setLoading(true);
+    setError('');
     try {
       const response = await api.get('/action-plan');
       setPlan(response.data.actionPlan);
     } catch (error) {
-      if (error.response?.status !== 404) {
+      if (error.response?.status === 404) {
+        setPlan(null);
+      } else {
         console.error('Error fetching plan:', error);
+        setError('Failed to load action plan');
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const generatePlan = async () => {
+  useEffect(() => {
+    fetchPlan();
+  }, [fetchPlan]);
+
+  const generatePlan = useCallback(async () => {
     setGenerating(true);
+    setError('');
     try {
       const response = await api.post('/action-plan/generate');
       setPlan(response.data.actionPlan);
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to generate plan');
+      const errorMsg = error.response?.data?.error || 'Failed to generate plan';
+      setError(errorMsg);
+      alert(errorMsg);
     } finally {
       setGenerating(false);
     }
-  };
+  }, []);
 
-  const toggleTask = async (day, taskIndex) => {
+  const toggleTask = useCallback(async (day, taskIndex) => {
+    if (!plan) return;
+    
     const dayPlan = plan.plan.find(d => d.day === day);
-    const currentStatus = dayPlan.tasks[taskIndex].done;
+    if (!dayPlan) return;
+    
+    const currentStatus = dayPlan.tasks[taskIndex]?.done || false;
+    
+    // Optimistic update
+    const updatedPlan = {
+      ...plan,
+      plan: plan.plan.map(d => {
+        if (d.day === day) {
+          return {
+            ...d,
+            tasks: d.tasks.map((t, idx) => 
+              idx === taskIndex ? { ...t, done: !currentStatus } : t
+            )
+          };
+        }
+        return d;
+      })
+    };
+    setPlan(updatedPlan);
     
     try {
       const response = await api.patch('/action-plan/task', {
@@ -50,8 +79,11 @@ export default function ActionPlan() {
       setPlan(response.data.actionPlan);
     } catch (error) {
       console.error('Error updating task:', error);
+      // Revert on error
+      setPlan(plan);
+      alert('Failed to update task. Please try again.');
     }
-  };
+  }, [plan]);
 
   return (
     <div className="page">
@@ -62,11 +94,17 @@ export default function ActionPlan() {
 
       <div className="container">
         {loading ? (
-          <div className="loading">Loading...</div>
+          <div className="loading">Loading your action plan...</div>
+        ) : error && !plan ? (
+          <div className="card text-center">
+            <div className="error">{error}</div>
+            <button onClick={fetchPlan} className="btn-secondary">Retry</button>
+          </div>
         ) : !plan ? (
           <div className="card text-center">
             <h2>Generate Your Personalized Action Plan</h2>
             <p>Get a 7-day roadmap tailored to your profile and goals</p>
+            {error && <div className="error">{error}</div>}
             <button onClick={generatePlan} disabled={generating} className="btn-primary">
               {generating ? 'Generating... (this may take 10-15 seconds)' : 'Generate Action Plan'}
             </button>
@@ -86,7 +124,7 @@ export default function ActionPlan() {
                     <li key={idx} className={task.done ? 'done' : ''}>
                       <input
                         type="checkbox"
-                        checked={task.done}
+                        checked={task.done || false}
                         onChange={() => toggleTask(day.day, idx)}
                       />
                       <span>{task.task}</span>
@@ -101,14 +139,16 @@ export default function ActionPlan() {
               </div>
             ))}
 
-            <div className="card">
-              <h3>📝 ATS Resume Tips</h3>
-              <ul>
-                {plan.resumeTips.map((tip, idx) => (
-                  <li key={idx}>{tip}</li>
-                ))}
-              </ul>
-            </div>
+            {plan.resumeTips && plan.resumeTips.length > 0 && (
+              <div className="card">
+                <h3>📝 ATS Resume Tips</h3>
+                <ul>
+                  {plan.resumeTips.map((tip, idx) => (
+                    <li key={idx}>{tip}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <button onClick={generatePlan} disabled={generating} className="btn-secondary">
               {generating ? 'Regenerating...' : 'Regenerate Plan'}

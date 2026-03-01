@@ -28,8 +28,14 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await api.get('/auth/me');
       setUser(response.data.user);
+      return response.data.user;
     } catch (error) {
-      localStorage.removeItem('token');
+      console.error('Failed to fetch user:', error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        setUser(null);
+      }
+      return null;
     } finally {
       setLoading(false);
     }
@@ -49,13 +55,27 @@ export const AuthProvider = ({ children }) => {
     return response.data;
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
+  const logout = async () => {
+    try {
+      // Call server logout endpoint
+      await api.post('/auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('token');
+      setUser(null);
+    }
+  };
+
+  const updateUser = (userData) => {
+    setUser(prevUser => ({
+      ...prevUser,
+      ...userData
+    }));
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, fetchUser }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, fetchUser, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

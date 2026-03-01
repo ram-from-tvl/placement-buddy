@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
@@ -23,13 +23,18 @@ export default function Profile() {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [file, setFile] = useState(null);
-
-  // Dummy ATS feedback state
   const [atsFeedback, setAtsFeedback] = useState(null);
   const navigate = useNavigate();
 
+  // Check if profile is complete
+  const isProfileComplete = useCallback(() => {
+    if (!user?.profile) return false;
+    const { year, branch, targetRole, skills, hoursPerWeek } = user.profile;
+    return year && branch && targetRole && skills?.length > 0 && hoursPerWeek;
+  }, [user]);
+
   useEffect(() => {
-    if (user?.profile && user.profile.year) {
+    if (user?.profile) {
       setFormData({
         year: user.profile.year || '',
         branch: user.profile.branch || '',
@@ -37,83 +42,130 @@ export default function Profile() {
         skills: user.profile.skills?.join(', ') || '',
         hoursPerWeek: user.profile.hoursPerWeek || ''
       });
-      // If profile is already complete, maybe jump to final step or prepopulate
-      if (user.getProfileCompleteness && user.getProfileCompleteness() >= 100) {
+      
+      // If profile is already complete, go to edit mode
+      if (isProfileComplete()) {
         setStep(3);
         setEntryMode('manual');
       }
     }
-  }, [user]);
+  }, [user, isProfileComplete]);
 
-  const handleFileUpload = async (e) => {
-    const uploadedFile = e.target.files[0];
-    if (uploadedFile) {
-      setFile(uploadedFile);
-      setLoading(true);
-      setError('');
+  const handleFileUpload = useCallback(async (e) => {
+    const uploadedFile = e.target.files?.[0];
+    if (!uploadedFile) return;
 
-      const formDataUpload = new FormData();
-      formDataUpload.append('resume', uploadedFile);
-
-      try {
-        const response = await api.post('/profile/upload-resume', formDataUpload, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-
-        const atsData = response.data.data;
-
-        setAtsFeedback({
-          score: atsData.atsScore,
-          issues: atsData.issues || [],
-          tips: atsData.tips || []
-        });
-
-        // Pre-fill some data from parsing
-        setFormData(prev => ({
-          ...prev,
-          year: atsData.year || prev.year,
-          branch: atsData.branch || prev.branch,
-          skills: (atsData.skills || []).join(', ') || prev.skills,
-          targetRole: atsData.targetRole || prev.targetRole
-        }));
-
-        setStep(3); // Move to review step
-      } catch (err) {
-        console.error("Resume parse error", err);
-        setError(err.response?.data?.error || 'Failed to parse the resume ATS data.');
-      } finally {
-        setLoading(false);
-      }
+    // Validate file type
+    const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!validTypes.includes(uploadedFile.type)) {
+      setError('Please upload a PDF or DOCX file');
+      return;
     }
-  };
 
-  const handleSelectMode = (mode) => {
+    // Validate file size (5MB max)
+    if (uploadedFile.size > 5 * 1024 * 1024) {
+      setError('File size must be less than 5MB');
+      return;
+    }
+
+    setFile(uploadedFile);
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    const formDataUpload = new FormData();
+    formDataUpload.append('resume', uploadedFile);
+
+    try {
+      const response = await api.post('/profile/upload-resume', formDataUpload, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      const atsData = response.data.data;
+
+      setAtsFeedback({
+        score: atsData.atsScore || 0,
+        issues: atsData.issues || [],
+        tips: atsData.tips || []
+      });
+
+      // Pre-fill data from parsing
+      setFormData(prev => ({
+        year: atsData.year || prev.year,
+        branch: atsData.branch || prev.branch,
+        skills: Array.isArray(atsData.skills) ? atsData.skills.join(', ') : prev.skills,
+        targetRole: atsData.targetRole || prev.targetRole,
+        hoursPerWeek: prev.hoursPerWeek
+      }));
+
+      setSuccess('Resume parsed successfully!');
+      setStep(3); // Move to review step
+    } catch (err) {
+      console.error("Resume parse error", err);
+      setError(err.response?.data?.error || 'Failed to parse the resume. Please try again or enter details manually.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleSelectMode = useCallback((mode) => {
     setEntryMode(mode);
     setStep(mode === 'resume' ? 2 : 3);
-  };
+    setError('');
+    setSuccess('');
+  }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setSuccess('');
 
+    // Validate form data
+    if (!formData.year || !formData.branch || !formData.targetRole || !formData.skills || !formData.hoursPerWeek) {
+      setError('Please fill in all fields');
+      setLoading(false);
+      return;
+    }
+
     try {
-      await api.post('/profile', {
-        ...formData,
-        skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean)
+      const skillsArray = formData.skills.split(',').map(s => s.trim()).filter(Boolean);
+      
+      if (skillsArray.length === 0) {
+        setError('Please enter at least one skill');
+        setLoading(false);
+        return;
+      }
+
+      const response = await api.post('/profile', {
+        year: formData.year,
+        branch: formData.branch,
+        targetRole: formData.targetRole,
+        skills: skillsArray,
+        hoursPerWeek: parseInt(formData.hoursPerWeek)
       });
-      setSuccess('Profile updated successfully! Welcome aboard.');
-      await fetchUser();
-      setTimeout(() => navigate('/'), 1500);
+      
+      setSuccess('Profile updated successfully! Redirecting to dashboard...');
+      
+      // Wait for user data to refresh completely
+      const updatedUser = await fetchUser();
+      
+      if (updatedUser) {
+        // Navigate after state is fully updated
+        setTimeout(() => navigate('/'), 800);
+      } else {
+        // If fetch failed, still navigate but user will see updated data from response
+        setTimeout(() => navigate('/'), 800);
+      }
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to update profile');
+      console.error('Profile update error:', err);
+      setError(err.response?.data?.error || 'Failed to update profile. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [formData, fetchUser, navigate]);
 
   const renderStepOne = () => (
     <div className="onboarding-step animation-fade-in">
@@ -139,29 +191,35 @@ export default function Profile() {
 
   const renderStepTwo = () => (
     <div className="onboarding-step animation-fade-in">
-      <button className="btn-back" onClick={() => setStep(1)}><ChevronLeft /> Back</button>
+      <button className="btn-back" onClick={() => { setStep(1); setError(''); }}><ChevronLeft /> Back</button>
       <h2>Upload your Resume</h2>
-      <p className="subtitle">Upload your PDF or DOCX file to instantly populate your profile and get an ATS critique.</p>
+      <p className="subtitle">Upload your PDF file to instantly populate your profile and get an ATS critique.</p>
+
+      {error && <div className="error">{error}</div>}
+      {success && <div className="success">{success}</div>}
 
       <div className="upload-zone">
         <input
           type="file"
           id="resume-upload"
-          accept=".pdf,.doc,.docx"
+          accept=".pdf"
           onChange={handleFileUpload}
+          disabled={loading}
           style={{ display: 'none' }}
         />
-        <label htmlFor="resume-upload" className="upload-label">
+        <label htmlFor="resume-upload" className={`upload-label ${loading ? 'disabled' : ''}`}>
           {loading ? (
             <div className="loading-state">
               <div className="spinner"></div>
               <p>Parsing with Kai AI and checking ATS readability...</p>
+              <p className="text-sm">This may take 10-15 seconds</p>
             </div>
           ) : (
             <>
               <FileText size={48} color="var(--primary)" />
               <h3>Click to browse or drag & drop</h3>
-              <p>PDF, DOCX up to 5MB</p>
+              <p>PDF up to 5MB</p>
+              {file && <p className="text-sm">Selected: {file.name}</p>}
             </>
           )}
         </label>
@@ -169,13 +227,23 @@ export default function Profile() {
     </div>
   );
 
+  const handleBackFromStep3 = useCallback(() => {
+    setError('');
+    setSuccess('');
+    if (entryMode === 'resume') {
+      setStep(2);
+      setAtsFeedback(null);
+    } else {
+      setStep(1);
+    }
+  }, [entryMode]);
+
   const renderStepThree = () => (
     <div className="onboarding-step animation-fade-in">
       <div className="header-flex">
-        <button className="btn-back" onClick={() => {
-          if (entryMode === 'resume') { setStep(2); setAtsFeedback(null); }
-          else setStep(1);
-        }}><ChevronLeft /> Back</button>
+        <button className="btn-back" onClick={handleBackFromStep3}>
+          <ChevronLeft /> Back
+        </button>
         <h2>Review & Complete Profile</h2>
       </div>
       <p className="subtitle">
@@ -281,7 +349,7 @@ export default function Profile() {
         </label>
 
         <button type="submit" className="btn-primary full-width" disabled={loading}>
-          {loading ? 'Saving...' : 'Finalize Profile & Start Journey'}
+          {loading ? 'Saving...' : (isProfileComplete() ? 'Update Profile' : 'Finalize Profile & Start Journey')}
         </button>
       </form>
     </div>
