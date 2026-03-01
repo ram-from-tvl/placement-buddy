@@ -1,12 +1,54 @@
+# Environment variables
+.env
+server/.env
+
+# Dependencies
 node_modules/
+server/node_modules/
+client/node_modules/
+
+# Python
 venv/
 __pycache__/
 *.pyc
-.env
-.env.*
-!.env.example
+*.pyo
+*.pyd
+.Python
+
+# Build outputs
 client/dist/
+server/dist/
+build/
+
+# Logs
 logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
 .DS_Store
-.frontend.pid
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Uploads
+server/uploads/
+uploads/
+
+# Process IDs
 .backend.pid
+.frontend.pid
+
+# Test files
+resume_sample.pdf
+
+# Temporary files
+*.tmp
+*.temp

@@ -45,33 +45,34 @@ app.use((err, req, res, next) => {
 // Connect to MongoDB
 console.log('🔄 Connecting to MongoDB...');
 mongoose.connect(process.env.MONGODB_URI, {
-  serverSelectionTimeoutMS: 5000,
+  serverSelectionTimeoutMS: 10000,
   socketTimeoutMS: 45000,
 })
   .then(() => {
     console.log('✅ Connected to MongoDB');
     console.log(`📦 Database: kai_placement_copilot`);
-    
-    // Start server
-    const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📍 API: http://localhost:${PORT}`);
-      console.log(`🏥 Health: http://localhost:${PORT}/health`);
-      console.log('\n⚠️  If you see connection errors, please:');
-      console.log('   1. Go to MongoDB Atlas Dashboard');
-      console.log('   2. Network Access → Add IP Address');
-      console.log('   3. Add 0.0.0.0/0 (Allow from anywhere) for testing');
-    });
   })
   .catch((error) => {
     console.error('❌ MongoDB connection error:', error.message);
-    console.log('\n⚠️  Please whitelist your IP in MongoDB Atlas:');
+    console.log('\n⚠️  IMPORTANT: MongoDB connection failed!');
+    console.log('   The server will start but database operations will fail.');
+    console.log('   Please whitelist your IP in MongoDB Atlas:');
     console.log('   1. Go to https://cloud.mongodb.com');
-    console.log('   2. Select your cluster');
-    console.log('   3. Network Access → Add IP Address');
-    console.log('   4. Add 0.0.0.0/0 (Allow from anywhere) for testing\n');
-    process.exit(1);
+    console.log('   2. Select your cluster → Network Access');
+    console.log('   3. Add IP Address → Add Current IP Address');
+    console.log('   4. Or add 0.0.0.0/0 (Allow from anywhere) for testing\n');
   });
+
+// Start server regardless of MongoDB connection
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📍 API: http://localhost:${PORT}`);
+  console.log(`🏥 Health: http://localhost:${PORT}/health`);
+  console.log('\n💡 Next Steps:');
+  console.log('   1. Ensure MongoDB Atlas IP is whitelisted');
+  console.log('   2. Frontend will start on http://localhost:5173');
+  console.log('   3. Run tests: cd server && node test-api.js\n');
+});
 
 export default app;
