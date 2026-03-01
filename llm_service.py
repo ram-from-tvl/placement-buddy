@@ -7,6 +7,7 @@ Provides action plan and mock interview generation
 import os
 import json
 import sys
+import base64
 from groq import Groq
 
 # Initialize Groq client
@@ -74,7 +75,8 @@ Make it practical, specific, and tailored to their profile. Return ONLY the JSON
         
         if start_idx != -1 and end_idx > start_idx:
             json_str = response_text[start_idx:end_idx]
-            return json.loads(json_str)
+            # Use strict=False to allow control characters in the JSON
+            return json.loads(json_str, strict=False)
         else:
             raise ValueError("No JSON found in response")
             
@@ -123,7 +125,8 @@ Make questions realistic and commonly asked in actual interviews. Return ONLY th
         
         if start_idx != -1 and end_idx > start_idx:
             json_str = response_text[start_idx:end_idx]
-            return json.loads(json_str)
+            # Use strict=False to allow control characters in the JSON
+            return json.loads(json_str, strict=False)
         else:
             raise ValueError("No JSON found in response")
             
@@ -183,7 +186,8 @@ Make questions practical and tailored. Return ONLY the JSON, no other text."""
         
         if start_idx != -1 and end_idx > start_idx:
             json_str = response_text[start_idx:end_idx]
-            return json.loads(json_str)
+            # Use strict=False to allow control characters in the JSON
+            return json.loads(json_str, strict=False)
         else:
             raise ValueError("No JSON found in response")
             
@@ -271,7 +275,8 @@ Return ONLY a JSON object with this structure and nothing else:
 
         if start_idx != -1 and end_idx > start_idx:
             json_str = response_text[start_idx:end_idx]
-            return json.loads(json_str)
+            # Use strict=False to allow control characters in the JSON
+            return json.loads(json_str, strict=False)
         else:
             raise ValueError("No JSON found in response")
 
@@ -288,25 +293,26 @@ def main():
 
     action = sys.argv[1]
 
-    # Join all remaining arguments to be robust to shell splitting,
-    # then strip optional surrounding quotes before JSON parsing.
+    # All callers send a single base64-encoded JSON payload as the remaining arg.
     raw_data = " ".join(sys.argv[2:]).strip()
-    if raw_data and raw_data[0] == raw_data[-1] and raw_data[0] in ("'", '"'):
-        raw_data = raw_data[1:-1]
 
-    try:
-        data = json.loads(raw_data) if raw_data else {}
-    except Exception as e:
-        print(
-            json.dumps(
-                {
-                    "error": f"Failed to parse JSON args: {e}",
-                    "raw": raw_data,
-                }
-            ),
-            file=sys.stderr,
-        )
-        sys.exit(1)
+    if not raw_data:
+        data = {}
+    else:
+        try:
+            decoded = base64.b64decode(raw_data).decode("utf-8")
+            data = json.loads(decoded)
+        except Exception as e:
+            print(
+                json.dumps(
+                    {
+                        "error": f"Failed to decode/parse payload: {e}",
+                        "raw": raw_data,
+                    }
+                ),
+                file=sys.stderr,
+            )
+            sys.exit(1)
 
     try:
         if action == "action_plan":
