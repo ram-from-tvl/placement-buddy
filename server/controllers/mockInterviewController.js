@@ -23,8 +23,28 @@ export const createMockInterview = async (req, res) => {
         .json({ error: "Profile incomplete. Please set target role and year." });
     }
 
-    // Generate questions using AI
-    const generated = await generateMockQuestions(targetRole, year);
+    // Generate questions using AI (with fallback on failure)
+    let generated;
+    try {
+      generated = await generateMockQuestions(targetRole, year);
+    } catch (err) {
+      console.error('Mock question generation failed, falling back to static list', err);
+      // provide a simple static question set so the user can still proceed
+      generated = {
+        questions: [
+          { question: `What interests you about the ${targetRole} position?` },
+          { question: `Describe a challenging project you worked on in ${year} year.` },
+          { question: `How do you stay current with industry trends?` },
+          { question: `Tell me about a time you had to work in a team.` },
+          { question: `What programming languages are you most comfortable with?` },
+          { question: `Explain a technical concept to a non-technical person.` },
+          { question: `Have you ever faced an ethical dilemma? How did you handle it?` },
+          { question: `How do you prioritize tasks under a tight deadline?` },
+          { question: `What are your long-term career goals?` },
+          { question: `Why should we hire you for the ${targetRole} role?` }
+        ]
+      };
+    }
 
     const mockInterview = new MockInterview({
       userId: req.userId,

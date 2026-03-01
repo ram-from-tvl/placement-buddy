@@ -198,13 +198,17 @@ Make questions practical and tailored. Return ONLY the JSON, no other text."""
 def main():
     """Main function to handle CLI requests"""
     if len(sys.argv) < 2:
-        print("Usage: python llm_service.py <action> <json_data>", file=sys.stderr)
+        print("Usage: python llm_service.py <action> <json_file_path>", file=sys.stderr)
         sys.exit(1)
     
     action = sys.argv[1]
-    data = json.loads(sys.argv[2])
+    json_file_path = sys.argv[2]
     
     try:
+        # Read JSON from file
+        with open(json_file_path, 'r') as f:
+            data = json.load(f)
+        
         if action == "action_plan":
             result = generate_action_plan(data)
         elif action == "mock_questions":
