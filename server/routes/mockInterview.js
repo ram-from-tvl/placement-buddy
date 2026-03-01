@@ -1,17 +1,35 @@
-import express from 'express';
-import { 
-  createMockInterview, 
-  getMockInterviews, 
+import express from "express";
+import {
+  createMockInterview,
+  getMockInterviews,
   getMockInterview,
-  answerQuestion 
-} from '../controllers/mockInterviewController.js';
-import { authenticate } from '../middleware/auth.js';
+  answerQuestion,
+  getInterviewHistory
+} from "../controllers/mockInterviewController.js";
+
+import { authenticate } from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.post('/generate', authenticate, createMockInterview);
-router.get('/', authenticate, getMockInterviews);
-router.get('/:id', authenticate, getMockInterview);
-router.patch('/:id/answer', authenticate, answerQuestion);
+
+// CREATE NEW MOCK INTERVIEW
+router.post("/generate", authenticate, createMockInterview);
+
+
+// GET INTERVIEW HISTORY (COMPLETED INTERVIEWS)
+router.get("/history", authenticate, getInterviewHistory);
+
+
+// GET ALL INTERVIEWS
+router.get("/", authenticate, getMockInterviews);
+
+
+// GET SINGLE INTERVIEW
+router.get("/:id", authenticate, getMockInterview);
+
+
+// SAVE ANSWER
+router.patch("/:id/answer", authenticate, answerQuestion);
+
 
 export default router;
