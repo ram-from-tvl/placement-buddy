@@ -1,0 +1,21 @@
+{
+  "name": "kai-placement-copilot",
+  "version": "1.0.0",
+  "description": "AI-powered placement preparation platform",
+  "scripts": {
+    "start": "./start.sh",
+    "stop": "./stop.sh",
+    "test": "./test.sh",
+    "dev": "./start.sh",
+    "install-all": "cd server && npm install && cd ../client && npm install && cd .. && python3 -m venv venv && source venv/bin/activate && pip install groq"
+  },
+  "keywords": [
+    "placement",
+    "copilot",
+    "ai",
+    "interview",
+    "preparation"
+  ],
+  "author": "Kai Team",
+  "license": "MIT"
+}
