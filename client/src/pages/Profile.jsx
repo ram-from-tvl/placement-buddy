@@ -45,36 +45,47 @@ export default function Profile() {
     }
   }, [user]);
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const uploadedFile = e.target.files[0];
     if (uploadedFile) {
       setFile(uploadedFile);
-      // Simulate fake parsing/ATS check
       setLoading(true);
-      setTimeout(() => {
-        setLoading(false);
-        setAtsFeedback({
-          score: 64,
-          issues: [
-            "Missing clear graduation year format",
-            "Target role is ambiguous based on projects",
-            "Incompatible PDF formatting for some ATS parsers"
-          ],
-          tips: [
-            "Use standard section headers (Education, Experience, Skills)",
-            "Ensure standard fonts instead of complex formatting",
-            "Include your target job title under your name"
-          ]
+      setError('');
+
+      const formDataUpload = new FormData();
+      formDataUpload.append('resume', uploadedFile);
+
+      try {
+        const response = await api.post('/profile/upload-resume', formDataUpload, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
         });
-        // Fake pre-fill some data from "parsing"
+
+        const atsData = response.data.data;
+
+        setAtsFeedback({
+          score: atsData.atsScore,
+          issues: atsData.issues || [],
+          tips: atsData.tips || []
+        });
+
+        // Pre-fill some data from parsing
         setFormData(prev => ({
           ...prev,
-          branch: 'Computer Science',
-          skills: 'JavaScript, React, Python, SQL',
-          targetRole: 'Software Engineer'
+          year: atsData.year || prev.year,
+          branch: atsData.branch || prev.branch,
+          skills: (atsData.skills || []).join(', ') || prev.skills,
+          targetRole: atsData.targetRole || prev.targetRole
         }));
+
         setStep(3); // Move to review step
-      }, 2500);
+      } catch (err) {
+        console.error("Resume parse error", err);
+        setError(err.response?.data?.error || 'Failed to parse the resume ATS data.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
