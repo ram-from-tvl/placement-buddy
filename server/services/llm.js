@@ -29,22 +29,22 @@ if (fs.existsSync(windowsPython)) {
 export const generateActionPlan = async (profile) => {
   try {
     console.log('🤖 Generating action plan with Groq LLM...');
-    
+
     const profileData = JSON.stringify(profile);
     const command = `${venvPython} ${pythonScript} action_plan '${profileData}'`;
-    
+
     const { stdout, stderr } = await execAsync(command, {
       maxBuffer: 10 * 1024 * 1024 // 10MB buffer
     });
-    
+
     if (stderr && !stdout) {
       throw new Error(`Python script error: ${stderr}`);
     }
-    
+
     const result = JSON.parse(stdout);
     console.log('✅ Action plan generated successfully');
     return result;
-    
+
   } catch (error) {
     console.error('❌ LLM Service Error:', error.message);
     throw error;
@@ -54,24 +54,49 @@ export const generateActionPlan = async (profile) => {
 export const generateMockQuestions = async (role, year) => {
   try {
     console.log('🤖 Generating mock questions with Groq LLM...');
-    
+
     const data = JSON.stringify({ role, year });
     const command = `${venvPython} ${pythonScript} mock_questions '${data}'`;
-    
+
     const { stdout, stderr } = await execAsync(command, {
       maxBuffer: 10 * 1024 * 1024 // 10MB buffer
     });
-    
+
     if (stderr && !stdout) {
       throw new Error(`Python script error: ${stderr}`);
     }
-    
+
     const result = JSON.parse(stdout);
     console.log('✅ Mock questions generated successfully');
     return result;
-    
+
   } catch (error) {
     console.error('❌ LLM Service Error:', error.message);
+    throw error;
+  }
+};
+
+export const parseResume = async (resumeText) => {
+  try {
+    console.log('🤖 Parsing resume with Groq LLM...');
+
+    const data = JSON.stringify({ resume_text: resumeText });
+    const command = `${venvPython} ${pythonScript} parse_resume '${data}'`;
+
+    const { stdout, stderr } = await execAsync(command, {
+      maxBuffer: 10 * 1024 * 1024 // 10MB buffer
+    });
+
+    if (stderr && !stdout) {
+      throw new Error(`Python script error: ${stderr}`);
+    }
+
+    const result = JSON.parse(stdout);
+    console.log('✅ Resume parsed successfully');
+    return result;
+
+  } catch (error) {
+    console.error('❌ LLM parsing error:', error.message);
     throw error;
   }
 };

@@ -131,6 +131,66 @@ Make questions realistic and commonly asked in actual interviews. Return ONLY th
         print(f"Error generating mock questions: {e}", file=sys.stderr)
         raise
 
+def parse_resume(resume_text):
+    """Parse resume text to get ATS feedback and profile details"""
+    
+    prompt = f"""You are an expert ATS system and tech recruiter. You are provided with raw text extracted from a student's resume.
+Your task is to:
+1. Extract their likely academic year based on education (1st, 2nd, 3rd, 4th). If unsure or graduated, default to "4th" or "3rd".
+2. Extract their branch/department (e.g., Computer Science, Electrical).
+3. Extract an array/list of core skills found in the text.
+4. Extract their target placement role based on experience or an objective statement (e.g., Software Engineer).
+5. Evaluate the resume text against common ATS standards. Give it an ATS readability and impact score out of 100.
+6. Identify up to 3 specific issues/flaws detected in parsing this resume (e.g., missing sections, ambiguous dates, complex formatting that broke).
+7. Provide up to 3 actionable tips to improve this resume's ATS score.
+
+Resume Text:
+'''
+{resume_text[:4000]} # Trim to avoid token limits if too large
+'''
+
+Format the response STRICTLY as JSON:
+{{
+  "year": "3rd",
+  "branch": "Computer Science",
+  "skills": ["JavaScript", "Python", "React"],
+  "targetRole": "Software Engineer",
+  "atsScore": 65,
+  "issues": ["Missing clear graduation year format", "Target role is ambiguous"],
+  "tips": ["Use standard section headers", "Include your target job title"]
+}}
+
+Make questions practical and tailored. Return ONLY the JSON, no other text."""
+
+    try:
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
+            model=MODEL,
+            temperature=0.3,
+            max_tokens=1500,
+        )
+        
+        response_text = chat_completion.choices[0].message.content
+        
+        # Extract JSON from response
+        start_idx = response_text.find('{')
+        end_idx = response_text.rfind('}') + 1
+        
+        if start_idx != -1 and end_idx > start_idx:
+            json_str = response_text[start_idx:end_idx]
+            return json.loads(json_str)
+        else:
+            raise ValueError("No JSON found in response")
+            
+    except Exception as e:
+        print(f"Error parsing resume: {e}", file=sys.stderr)
+        raise
+
 def generate_career_coach_reply(payload):
     """Generate a career coach reply given context and recent messages"""
 
@@ -253,6 +313,8 @@ def main():
             result = generate_action_plan(data)
         elif action == "mock_questions":
             result = generate_mock_questions(data["role"], data["year"])
+        elif action == "parse_resume":
+            result = parse_resume(data['resume_text'])
         elif action == "career_coach":
             result = generate_career_coach_reply(data)
         else:
