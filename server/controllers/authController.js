@@ -106,9 +106,25 @@ export const login = async (req, res) => {
 export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.userId).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
     res.json({ user });
   } catch (error) {
     console.error('Get me error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+export const logout = async (req, res) => {
+  try {
+    // Could implement token blacklist here if needed
+    // For now, just confirm logout
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    console.error('Logout error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };

@@ -1,80 +1,53 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import api from "../api/axios";
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import api from '../api/axios';
 
 export default function MockInterview() {
   const [interviews, setInterviews] = useState([]);
   const [currentInterview, setCurrentInterview] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [answers, setAnswers] = useState({});
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchInterviews();
-  }, []);
-
-  const fetchInterviews = async () => {
+  const fetchInterviews = useCallback(async () => {
     setLoading(true);
+    setError('');
     try {
-      const response = await api.get("/mock-interview");
-      setInterviews(response.data.mockInterviews || []);
+      const response = await api.get('/mock-interview');
+      setInterviews(response.data.mockInterviews);
     } catch (error) {
-      console.error("Error fetching interviews:", error);
+      console.error('Error fetching interviews:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  const generateInterview = async () => {
+  const generateInterview = useCallback(async () => {
     setGenerating(true);
-
     try {
-      const response = await api.post("/mock-interview/generate");
-      const newInterview = response.data.mockInterview;
-
-      setCurrentInterview(newInterview);
-      setInterviews((prev) => [newInterview, ...prev]);
+      const response = await api.post('/mock-interview/generate');
+      setCurrentInterview(response.data.mockInterview);
+      setInterviews([response.data.mockInterview, ...interviews]);
       setAnswers({});
     } catch (error) {
-      alert(error.response?.data?.error || "Failed to generate interview");
+      alert(error.response?.data?.error || 'Failed to generate interview');
+    } finally {
+      setGenerating(false);
     }
-
-    setGenerating(false);
   };
 
-  const saveAnswer = async (questionIndex, answer) => {
+  const saveAnswer = async (questionIndex) => {
     try {
-      const response = await api.patch(
-        `/mock-interview/${currentInterview._id}/answer`,
-        {
-          questionIndex,
-          answer
-        }
-      );
-
+      const response = await api.patch(`/mock-interview/${currentInterview._id}/answer`, {
+        questionIndex,
+        answer: answers[questionIndex] || ''
+      });
       setCurrentInterview(response.data.mockInterview);
     } catch (error) {
-      console.error("Auto save error:", error);
+      console.error('Error saving answer:', error);
     }
   };
-
-  // ⭐ AUTO SAVE LOGIC
-  useEffect(() => {
-    if (!currentInterview) return;
-
-    const timers = [];
-
-    Object.entries(answers).forEach(([index, answer]) => {
-
-      const timer = setTimeout(() => {
-        saveAnswer(index, answer);
-      }, 1000); // 1 second delay
-
-      timers.push(timer);
-    });
-
-    return () => timers.forEach((t) => clearTimeout(t));
-
-  }, [answers]);
 
   return (
     <div className="page">
@@ -94,18 +67,14 @@ export default function MockInterview() {
 
       <div className="container">
         <div className="card">
-          <button
-            onClick={generateInterview}
-            disabled={generating}
-            className="btn-primary"
-          >
-            {generating
-              ? "Generating... (10-15 seconds)"
-              : "+ New Mock Interview"}
+          <button onClick={generateInterview} disabled={generating} className="btn-primary">
+            {generating ? 'Generating... (10-15 seconds)' : '+ New Mock Interview'}
           </button>
         </div>
 
-        {currentInterview && (
+        {loading ? (
+          <div className="loading">Loading interviews...</div>
+        ) : currentInterview ? (
           <div className="card">
             <h3>Current Interview - {currentInterview.role}</h3>
 
@@ -121,18 +90,12 @@ export default function MockInterview() {
             {currentInterview.questions.map((q, idx) => (
               <div key={idx} className="question-card">
                 <h4>Question {idx + 1}</h4>
-
                 <p>{q.question}</p>
 
                 <textarea
                   placeholder="Type your answer here..."
-                  value={answers[idx] ?? q.answer ?? ""}
-                  onChange={(e) =>
-                    setAnswers({
-                      ...answers,
-                      [idx]: e.target.value
-                    })
-                  }
+                  value={answers[idx] || q.answer || ''}
+                  onChange={(e) => setAnswers({...answers, [idx]: e.target.value})}
                   rows="4"
                 />
 
@@ -142,7 +105,11 @@ export default function MockInterview() {
               </div>
             ))}
           </div>
-        )}
+        ) : interviews.length === 0 ? (
+          <div className="card text-center">
+            <p>No interviews yet. Generate your first mock interview to get started!</p>
+          </div>
+        ) : null}
 
         {interviews.length > 0 && (
           <div className="card">
@@ -150,11 +117,7 @@ export default function MockInterview() {
 
             <ul className="interview-list">
               {interviews.map((interview) => (
-                <li
-                  key={interview._id}
-                  onClick={() => setCurrentInterview(interview)}
-                  style={{ cursor: "pointer" }}
-                >
+                <li key={interview._id} onClick={() => setCurrentInterview(interview)}>
                   <strong>{interview.role}</strong>
 
                   <span>{interview.score}% complete</span>

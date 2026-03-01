@@ -47,9 +47,20 @@ if [ ! -d "venv" ]; then
     echo -e "${YELLOW}Creating Python virtual environment...${NC}"
     python3 -m venv venv
     source venv/bin/activate
-    pip install groq
+    pip install groq PyPDF2
 else
     source venv/bin/activate
+fi
+
+# Check if .env file exists and load GROQ_API_KEY
+if [ -f "server/.env" ]; then
+    export $(grep -v '^#' server/.env | grep GROQ_API_KEY | xargs)
+fi
+
+if [ -z "$GROQ_API_KEY" ]; then
+    echo -e "${RED}❌ GROQ_API_KEY not found in server/.env${NC}"
+    echo -e "${YELLOW}Please add GROQ_API_KEY to server/.env file${NC}"
+    exit 1
 fi
 
 echo -e "${GREEN}✅ Python virtual environment activated${NC}"
