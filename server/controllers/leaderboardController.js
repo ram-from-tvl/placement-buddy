@@ -3,18 +3,22 @@ import ReadinessCard from '../models/ReadinessCard.js';
 
 export const getLeaderboard = async (req, res) => {
   try {
-    const { college, page = 1, limit = 100 } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = Math.min(parseInt(req.query.limit) || 100, 100); // Max 100
+    const college = req.query.college;
     const skip = (page - 1) * limit;
 
     let query = { readinessScore: { $gt: 0 } };
     if (college) {
-      query.college = new RegExp(college, 'i');
+      // Escape special regex characters
+      const escapedCollege = college.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.college = new RegExp(escapedCollege, 'i');
     }
 
     const users = await User.find(query)
       .select('name college profile.targetRole readinessScore daysActive')
       .sort({ readinessScore: -1, daysActive: -1 })
-      .limit(parseInt(limit))
+      .limit(limit)
       .skip(skip);
 
     const total = await User.countDocuments(query);
@@ -41,8 +45,8 @@ export const getLeaderboard = async (req, res) => {
     res.json({
       leaderboard,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page,
+        limit,
         total,
         pages: Math.ceil(total / limit)
       }

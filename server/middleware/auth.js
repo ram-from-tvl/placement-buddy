@@ -16,14 +16,25 @@ export const authenticate = async (req, res, next) => {
       return res.status(401).json({ error: 'User not found' });
     }
 
-    // Update days active
+    // Update days active (atomic operation to prevent race conditions)
     const today = new Date().setHours(0, 0, 0, 0);
     const lastActive = new Date(user.lastActiveDate).setHours(0, 0, 0, 0);
     
     if (today > lastActive) {
+      // Use atomic update to prevent race condition
+      await User.updateOne(
+        { 
+          _id: user._id, 
+          lastActiveDate: { $lt: new Date(today) } 
+        },
+        { 
+          $inc: { daysActive: 1 }, 
+          $set: { lastActiveDate: new Date() } 
+        }
+      );
+      // Update local user object
       user.daysActive += 1;
       user.lastActiveDate = new Date();
-      await user.save();
     }
 
     req.user = user;

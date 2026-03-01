@@ -16,13 +16,36 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
+// CORS configuration with whitelist
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  process.env.CLIENT_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Request ID middleware for tracing
+app.use((req, res, next) => {
+  req.id = Math.random().toString(36).substring(7);
+  res.setHeader('X-Request-ID', req.id);
+  next();
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -34,7 +57,7 @@ app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/career-coach', careerCoachRoutes);
 
 // Health check with dependency status
-app.get('/health', (req, res) => {
+app.get('/health', async (req, res) => {
   const health = {
     status: 'ok',
     message: 'Kai Placement Copilot API is running',
@@ -60,10 +83,14 @@ app.use((req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  console.error(`[${req.id}] Error:`, err);
+  
+  // Don't leak error details in production
   const isDevelopment = process.env.NODE_ENV !== 'production';
+  
   res.status(err.status || 500).json({ 
     error: isDevelopment ? err.message : 'Internal server error',
+    requestId: req.id,
     ...(isDevelopment && { stack: err.stack })
   });
 });
@@ -82,7 +109,7 @@ mongoose.connect(process.env.MONGODB_URI, {
     console.log('✅ Connected to MongoDB');
     console.log(`📦 Database: kai_placement_copilot`);
     
-    // Create indexes for performance
+    // Create indexes
     createIndexes();
   })
   .catch((error) => {
@@ -120,7 +147,18 @@ async function createIndexes() {
   }
 }
 
-// Graceful shutdown handlers
+// Middleware to check DB connection
+app.use((req, res, next) => {
+  if (!isDbConnected && !req.path.includes('/health')) {
+    return res.status(503).json({ 
+      error: 'Database connection not available. Please try again later.',
+      code: 'DB_UNAVAILABLE'
+    });
+  }
+  next();
+});
+
+// Graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('SIGTERM received, closing server gracefully...');
   await mongoose.connection.close();
@@ -133,20 +171,9 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-// Middleware to check DB connection
-app.use((req, res, next) => {
-  if (!isDbConnected && !req.path.includes('/health')) {
-    return res.status(503).json({ 
-      error: 'Database connection not available. Please try again later.',
-      code: 'DB_UNAVAILABLE'
-    });
-  }
-  next();
-});
-
-// Start server regardless of MongoDB connection
+// Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📍 API: http://localhost:${PORT}`);
   console.log(`🏥 Health: http://localhost:${PORT}/health`);

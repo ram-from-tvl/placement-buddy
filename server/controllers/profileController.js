@@ -10,25 +10,52 @@ const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '../..');
-const pythonScript = path.join(projectRoot, 'ats_service.py');
+const pythonScript = path.join(projectRoot, 'ats_service_enhanced.py');
 const venvPython = path.join(projectRoot, 'venv/bin/python');
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(projectRoot, 'server/uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 export const updateProfile = async (req, res) => {
   try {
-    const { year, branch, targetRole, skills, hoursPerWeek } = req.body;
+    const profileData = req.body;
 
     const user = await User.findById(req.userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Update profile
+    // Update all profile fields
     user.profile = {
-      year: year || user.profile.year,
-      branch: branch || user.profile.branch,
-      targetRole: targetRole || user.profile.targetRole,
-      skills: skills || user.profile.skills,
-      hoursPerWeek: hoursPerWeek || user.profile.hoursPerWeek
+      // Basic Info
+      year: profileData.year || user.profile.year,
+      branch: profileData.branch || user.profile.branch,
+      targetRole: profileData.targetRole || user.profile.targetRole,
+      skills: profileData.skills || user.profile.skills,
+      hoursPerWeek: profileData.hoursPerWeek || user.profile.hoursPerWeek,
+      
+      // Contact Info
+      phone: profileData.phone || user.profile.phone,
+      location: profileData.location || user.profile.location,
+      linkedin: profileData.linkedin || user.profile.linkedin,
+      github: profileData.github || user.profile.github,
+      portfolio: profileData.portfolio || user.profile.portfolio,
+      
+      // Comprehensive Data
+      education: profileData.education || user.profile.education || [],
+      experience: profileData.experience || user.profile.experience || [],
+      projects: profileData.projects || user.profile.projects || [],
+      certifications: profileData.certifications || user.profile.certifications || [],
+      achievements: profileData.achievements || user.profile.achievements || [],
+      languages: profileData.languages || user.profile.languages || [],
+      
+      // ATS Data
+      atsScore: profileData.atsScore !== undefined ? profileData.atsScore : user.profile.atsScore,
+      atsIssues: profileData.atsIssues || user.profile.atsIssues || [],
+      atsTips: profileData.atsTips || user.profile.atsTips || []
     };
 
     await user.save();

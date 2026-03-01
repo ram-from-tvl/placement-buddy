@@ -18,7 +18,7 @@ export const createMockInterview = async (req, res) => {
       return res.status(400).json({ error: 'Profile incomplete. Please set target role and year.' });
     }
 
-    // Generate questions using Gemini
+    // Generate questions using Groq
     const generated = await generateMockQuestions(targetRole, year);
 
     const mockInterview = new MockInterview({
@@ -89,8 +89,9 @@ export const answerQuestion = async (req, res) => {
       return res.status(404).json({ error: 'Question not found' });
     }
 
+    // Save answer (auto-save compatible)
     mockInterview.questions[questionIndex].answer = answer;
-    mockInterview.questions[questionIndex].answered = true;
+    mockInterview.questions[questionIndex].answered = answer && answer.trim().length > 0;
     mockInterview.calculateScore();
 
     await mockInterview.save();
@@ -102,6 +103,23 @@ export const answerQuestion = async (req, res) => {
     });
   } catch (error) {
     console.error('Answer question error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+export const getInterviewHistory = async (req, res) => {
+  try {
+    // Get only completed interviews
+    const history = await MockInterview.find({ 
+      userId: req.userId,
+      completedAt: { $ne: null }
+    })
+      .sort({ completedAt: -1 })
+      .select('role questions completedAt score correctAnswers wrongAnswers suggestions');
+
+    res.json({ history });
+  } catch (error) {
+    console.error('Get interview history error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };

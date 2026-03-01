@@ -102,7 +102,7 @@ async function runTests() {
   console.log('');
 
   // Test 7: Generate Action Plan
-  console.log('📍 Test 7: Generate Action Plan (using Gemini AI)');
+  console.log('📍 Test 7: Generate Action Plan (using Groq AI)');
   console.log('⏳ This may take 10-15 seconds...');
   const actionPlan = await apiCall('POST', '/action-plan/generate', null, true);
   if (actionPlan) {
@@ -129,7 +129,7 @@ async function runTests() {
   console.log('');
 
   // Test 10: Generate Mock Interview
-  console.log('📍 Test 10: Generate Mock Interview (using Gemini AI)');
+  console.log('📍 Test 10: Generate Mock Interview (using Groq AI)');
   console.log('⏳ This may take 10-15 seconds...');
   const mockInterview = await apiCall('POST', '/mock-interview/generate', {
     role: 'Software Development Engineer'

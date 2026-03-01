@@ -22,6 +22,10 @@ const mockInterviewSchema = new mongoose.Schema({
     answered: {
       type: Boolean,
       default: false
+    },
+    isCorrect: {
+      type: Boolean,
+      default: null
     }
   }],
   completedAt: {
@@ -33,6 +37,18 @@ const mockInterviewSchema = new mongoose.Schema({
     default: 0,
     min: 0,
     max: 100
+  },
+  correctAnswers: {
+    type: Number,
+    default: 0
+  },
+  wrongAnswers: {
+    type: Number,
+    default: 0
+  },
+  suggestions: {
+    type: [String],
+    default: []
   }
 }, {
   timestamps: true

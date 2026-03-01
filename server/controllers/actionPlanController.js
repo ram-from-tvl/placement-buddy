@@ -19,14 +19,15 @@ export const createActionPlan = async (req, res) => {
     // Check if action plan already exists
     let actionPlan = await ActionPlan.findOne({ userId: req.userId });
     
-    // Generate new plan using Gemini
+    // Generate new plan using Groq
     const generatedPlan = await generateActionPlan(user.profile);
 
     if (actionPlan) {
       // Update existing plan
       actionPlan.plan = generatedPlan.plan;
       actionPlan.resumeTips = generatedPlan.resumeTips;
-      actionPlan.progress = 0;
+      actionPlan.calculateProgress(); // Calculate before resetting
+      actionPlan.progress = 0; // Reset progress for new plan
     } else {
       // Create new plan
       actionPlan = new ActionPlan({

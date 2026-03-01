@@ -57,8 +57,22 @@ export const generateReadinessCard = async (req, res) => {
       card.score = score;
       card.breakdown = breakdown;
     } else {
-      // Create new card
-      const shareLink = nanoid(10);
+      // Create new card with collision-safe share link
+      let shareLink;
+      let attempts = 0;
+      const maxAttempts = 5;
+      
+      do {
+        shareLink = nanoid(12); // Increased from 10 to 12 for better uniqueness
+        const existing = await ReadinessCard.findOne({ shareLink });
+        if (!existing) break;
+        attempts++;
+      } while (attempts < maxAttempts);
+      
+      if (attempts >= maxAttempts) {
+        return res.status(500).json({ error: 'Failed to generate unique share link. Please try again.' });
+      }
+      
       card = new ReadinessCard({
         userId: req.userId,
         score,
